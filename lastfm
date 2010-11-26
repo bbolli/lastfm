@@ -1,0 +1,16 @@
+#!/bin/sh
+
+feed=$HOME/public_html/lastfm.atom
+
+# set up a temp file
+f=$(mktemp)
+trap "rm -f $f" EXIT TERM INT
+
+# get the current charts
+charts >$f || exit 1
+
+# exit if they didn't change
+cmp -s $f $feed; rc=$?; [ $rc != 1 ] && exit $rc
+
+# update the static file and post it to tumblr
+tee $feed <$f | tumble

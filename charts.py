@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """Gets the weekly play statistic from last.fm and generates
-an Atom feed with the five most played artists."""
+an Atom feed with the most played artists."""
 
 import sys, urllib, datetime
 import xmltramp, xmlbuilder
@@ -73,4 +73,5 @@ if __name__ == '__main__':
     for chunk in application(environ, _start):
         sys.stdout.write(chunk)
     if status[0] >= '4':
+        sys.stderr.write(status + '\n')
 	sys.exit(1)

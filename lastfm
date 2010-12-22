@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 current=$HOME/public_html/lastfm.atom
 new=$current.new
@@ -10,7 +10,7 @@ charts >$new || exit 1
 cmp -s $new $current; rc=$?; [ $rc != 1 ] && exit $rc
 
 # show the difference
-diff -u $new $current
+diff -ui <(sort $current) <(sort $new)
 exit
 
 # update the current file and post it to tumblr

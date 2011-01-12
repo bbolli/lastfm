@@ -9,7 +9,7 @@ DOMAIN = 'drbeat.li'
 PATH = '/lastfm.atom'
 MAX = 3
 
-import sys, urllib, datetime
+import sys, datetime
 import xmltramp, xmlbuilder
 
 ATOM_NS = 'http://www.w3.org/2005/Atom'
@@ -19,8 +19,9 @@ def fetch_weekly_charts(user_id):
     url = 'http://ws.audioscrobbler.com/2.0/user/%s/weeklyartistchart.xml' % user_id
     try:
 	parsed = xmltramp.load(url)
-    except:
-	return None
+    except Exception, e:
+	sys.stderr.write(repr(e) + '\n')
+	sys.exit(1)
     if parsed._name == 'weeklyartistchart':
 	return parsed
 
@@ -40,7 +41,6 @@ def make_feed(charts):
 	f.link(None, rel='self', href='http://%s%s' % (DOMAIN, PATH))
 	with f.entry:
 	    f.title("Top artists for the week ending %s" % when[:10])
-	    f.published(when)
 	    f.updated(when)
 	    f.id('tag:%s,%s:%s:%s' % (DOMAIN, when[:10], PATH, who))
 	    f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')

@@ -11,7 +11,7 @@ cmp -s $new $current; rc=$?; [ $rc != 1 ] && exit $rc
 
 if [ "$1" == -d ]; then
     # show the difference in dry-run mode
-    diff -ui <(sort $current) <(sort $new)
+    diff -ui <(sort $current) <(sort $new) || true
 else
     # update the current file and post it to tumblr
     mv -f $new $current && tumble <$current

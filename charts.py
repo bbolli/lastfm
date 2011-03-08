@@ -28,11 +28,11 @@ def fetch_weekly_charts(user_id):
 def make_feed(charts):
     f = xmlbuilder.builder()
     with f.feed(xmlns=ATOM_NS):
-        who = str(charts('user'))
+        who = unicode(charts('user'))
         when = datetime.datetime.utcfromtimestamp(int(charts('to')))
         when = when.isoformat() + 'Z'
         lastfm = 'http://www.last.fm/user/%s' % who
-        f.title("%s’s weekly last.fm charts" % who)
+        f.title(u"%s’s weekly last.fm charts" % who)
         with f.author:
             f.name(who)
         f.link(None, href=lastfm)
@@ -52,7 +52,7 @@ def make_feed(charts):
                         clast = c; i += 1
                         if i > MAX: break
                     with f.li:
-                        f.a(str(artist.name), href=str(artist.url))
+                        f.a(unicode(artist.name), href=str(artist.url))
                         f['(%s)' % c]
     return str(f)
 

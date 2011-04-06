@@ -1,7 +1,7 @@
 #!/bin/bash
 
 current=$HOME/public_html/lastfm.atom
-old=$current.old
+old=$current.bak
 new=$current.new
 
 # get the current charts

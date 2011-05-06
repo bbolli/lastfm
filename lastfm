@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Usage: lastfm [-d] [-u]
+#       -d: dry-run -- just show the differences
+#       -u: update -- just update the feed; don't post to tumblr
+
 current=$HOME/public_html/lastfm.atom
 old=$current.bak
 new=$current.new
@@ -8,12 +12,15 @@ new=$current.new
 charts >$new || exit 1
 
 # exit if they didn't change
-cmp -s $new $current; rc=$?; [ $rc != 1 ] && exit $rc
+if [ -r $current ]; then
+    cmp -s $new $current; rc=$?; [ $rc != 1 ] && exit $rc
+fi
 
 if [ "$1" == -d ]; then
     # show the difference in dry-run mode
     diff -ui <(sort $current) <(sort $new) || true
 else
     # update the current file and post it to tumblr
-    mv -f $current $old && mv -f $new $current && tumble <$current
+    [ -r $current ] && mv -f $current $old
+    mv -f $new $current && ([ "$1" = -u ] || tumble <$current)
 fi

@@ -18,12 +18,9 @@ XHTML_NS = 'http://www.w3.org/1999/xhtml'
 def fetch_weekly_charts(user_id):
     url = 'http://ws.audioscrobbler.com/2.0/user/%s/weeklyartistchart.xml' % user_id
     try:
-        parsed = xmltramp.load(url)
+        return xmltramp.load(url)
     except Exception, e:
-        sys.stderr.write(repr(e) + '\n')
-        sys.exit(1)
-    if parsed._name == 'weeklyartistchart':
-        return parsed
+        return xmltramp.Element('error', value=repr(e))
 
 def make_feed(charts):
     f = xmlbuilder.builder()
@@ -62,12 +59,12 @@ def application(environ, start_response):
     """WSGI interface"""
     user_id = environ.get('user_id') or 'bbolli'
     ch = fetch_weekly_charts(user_id)
-    if ch:
+    if ch._name == 'weeklyartistchart':
         start_response('200 OK', [('Content-Type', 'application/atom+xml')])
         return [make_feed(ch)]
     else:
-        start_response('404 Not found', [('Content-Type', 'text/plain')])
-        return ['last.fm user "', user_id, '" not found\n']
+        start_response('404 Not found', [('Content-Type', 'text/xml')])
+        return [ch.__repr__(1, 1)]
 
 if __name__ == '__main__':
     """command-line interface"""
@@ -78,6 +75,3 @@ if __name__ == '__main__':
         status = _st
     for chunk in application(environ, _start):
         sys.stdout.write(chunk)
-    if status[0] >= '4':
-        sys.stderr.write(status + '\n')
-        sys.exit(1)

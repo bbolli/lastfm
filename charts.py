@@ -68,10 +68,15 @@ def application(environ, start_response):
 
 if __name__ == '__main__':
     """command-line interface"""
+
+    class WSGIWrapper:
+        def start_response(self, status, header):
+            self.status = status
+        def run(self, app, env, out=sys.stdout):
+            self.status = ''
+            for chunk in app(env, self.start_response):
+                out.write(chunk)
+            return self.status
+
     environ = {'user_id': sys.argv[1] if len(sys.argv) == 2 else None}
-    status = ''
-    def _start(_st, _hdr):
-        global status
-        status = _st
-    for chunk in application(environ, _start):
-        sys.stdout.write(chunk)
+    WSGIWrapper().run(application, environ)

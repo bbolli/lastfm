@@ -1,15 +1,17 @@
 #!/bin/bash
 
-# Usage: lastfm [-d] [-u]
+# Usage: lastfm [-d] [-u] [-e]
 #       -d: dry-run -- just show the differences
 #       -u: update -- just update the feed; don't post to tumblr
+#       -e: edit -- edit the last tumblr post (the post-id is in file $id)
 
 current=$HOME/public_html/lastfm.atom
 old=$current.bak
 new=$current.new
+id=$current.id
 
 # get the current charts
-charts >$new || exit 1
+charts >$new || exit $?
 
 # exit if they didn't change
 if [ -r $current ]; then
@@ -22,5 +24,15 @@ if [ "$1" == -d ]; then
 else
     # update the current file and post it to tumblr
     [ -r $current ] && mv -f $current $old
-    mv -f $new $current && ([ "$1" = -u ] || tumble <$current)
+    if mv -f $new $current && [ "$1" != -u ]; then
+        if [ "$1" = -e ]; then
+            if [ -r $id -a -s $id ]; then
+                tumble -e $(cat $id) <$current
+            else
+                echo "$id is not readable or empty" >&2
+            fi
+        else
+            tumble <$current | sed -ne '/ok/s/[^0-9]\+//gp' >$id
+        fi
+    fi
 fi

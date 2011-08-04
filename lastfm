@@ -4,6 +4,9 @@
 #       -d: dry-run -- just show the differences
 #       -u: update -- just update the feed; don't post to tumblr
 #       -e: edit -- edit the last tumblr post (the post-id is in file $id)
+#
+# The default behavior is to add a new post if the <updated> date changed,
+# or edit the current post if it didn't.
 
 current=$HOME/public_html/lastfm.atom
 old=$current.bak
@@ -13,26 +16,27 @@ id=$current.id
 # get the current charts
 charts >$new || exit $?
 
-# exit if they didn't change
-if [ -r $current ]; then
-    cmp -s $new $current; rc=$?; [ $rc != 1 ] && exit $rc
-fi
+input=$current; [[ -r $current ]] || input=/dev/null
 
-if [ "$1" == -d ]; then
+# exit if they didn't change
+cmp -s $new $input; rc=$?; [[ $rc != 1 ]] && rm $new && exit $rc
+
+function updated() {
+    sed -ne '/<updated>/s![ </>updated]!!gp' <$1 | head -n1
+}
+
+if [[ "$1" == -d ]]; then
     # show the difference in dry-run mode
-    diff -ui <(sort $current) <(sort $new) || true
+    diff -ui <(sort $input) <(sort $new) || true
 else
-    # update the current file and post it to tumblr
-    [ -r $current ] && mv -f $current $old
-    if mv -f $new $current && [ "$1" != -u ]; then
-        if [ "$1" = -e ]; then
-            if [ -r $id -a -s $id ]; then
-                tumble -e $(cat $id) <$current
-            else
-                echo "$id is not readable or empty" >&2
-            fi
-        else
-            tumble <$current | sed -ne '/ok/s/[^0-9]\+//gp' >$id
-        fi
+    # update the current file
+    [[ -r $current ]] && mv -f $current $old
+    mv -f $new $current
+    [[ "$1" == -u ]] && exit
+    # edit the current post if the <updated> date is still the same
+    if [[ "$1" == -e || -r $old && "$(updated $old)" == "$(updated $current)" ]]; then
+        tumble -e "$(cat $id)" <$current
+    else
+        tumble <$current | sed -ne '/ok/s/[^0-9]\+//gp' >$id
     fi
 fi

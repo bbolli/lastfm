@@ -13,21 +13,25 @@ old=$current.bak
 new=$current.new
 id=$current.id
 
-# get the current charts
-charts >$new || exit $?
-
 input=$current; [[ -r $current ]] || input=/dev/null
 
-# exit if they didn't change
-cmp -s $new $input; rc=$?; [[ $rc != 1 ]] && rm $new && exit $rc
+function sorteddiff() {
+    diff -ui <(sort $input) <(sort $new)
+}
 
 function updated() {
     sed -ne '/<updated>/s![ </>updated]!!gp' <$1 | head -n1
 }
 
+# get the current charts
+charts >$new || exit $?
+
+# exit if they didn't change
+[[ -z "$(sorteddiff)" ]] && exit
+
 if [[ "$1" == -d ]]; then
     # show the difference in dry-run mode
-    diff -ui <(sort $input) <(sort $new) || true
+    sorteddiff || true
 else
     # update the current file
     [[ -r $current ]] && mv -f $current $old

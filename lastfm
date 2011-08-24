@@ -27,7 +27,7 @@ function updated() {
 charts >$new || exit $?
 
 # exit if they didn't change
-[[ -z "$(sorteddiff)" ]] && exit
+[[ -z "$(sorteddiff)" ]] && rm $new && exit
 
 if [[ "$1" == -d ]]; then
     # show the difference in dry-run mode

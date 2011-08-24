@@ -27,7 +27,7 @@ def fetch_weekly_charts(user_id):
     try:
         return xmltramp.load(url)
     except Exception, e:
-        return xmltramp.Element('error', value=repr(e))
+        return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
 
 def make_feed(charts):
     f = xmlbuilder.builder()

@@ -32,7 +32,7 @@ def fetch_weekly_charts(user_id):
 def make_feed(charts):
     f = xmlbuilder.builder()
     with f.feed(xmlns=ATOM_NS):
-        who = unicode(charts('user'))
+        who = charts('user')
         when = datetime.datetime.utcfromtimestamp(int(charts('to')))
         when = when.isoformat() + 'Z'
         lastfm = 'http://www.last.fm/user/%s' % who

@@ -41,6 +41,7 @@ else
     if [[ "$1" == -e || -r $old && "$(updated $old)" == "$(updated $current)" ]]; then
         tumble -e "$(cat $id)" <$current
     else
-        tumble <$current | sed -ne '/ok/s/[^0-9]\+//gp' >$id
+        tumble <$current | tee $id
+        sed -i -ne '/ok/s/[^0-9]\+//gp' $id
     fi
 fi

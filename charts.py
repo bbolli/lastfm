@@ -36,7 +36,7 @@ def make_feed(charts):
         when = datetime.datetime.utcfromtimestamp(int(charts('to')))
         when = when.isoformat() + 'Z'
         lastfm = 'http://www.last.fm/user/%s' % who
-        f.title(u"%s’s weekly last.fm charts" % who)
+        f.title(u"Meine last.fm-Hitparade")
         with f.author:
             f.name(who)
         f.link(None, href=lastfm)
@@ -44,7 +44,7 @@ def make_feed(charts):
         f.id('tag:drbeat.li,2010:lastfmcharts:%s' % who)
         f.link(None, rel='self', href='http://%s%s' % (DOMAIN, PATH))
         with f.entry:
-            f.title("Top artists for the week ending %s" % when[:10])
+            f.title(u"Meist gespielte Bands vom %s" % when[:10])
             f.updated(when)
             f.id('tag:%s,%s:%s:%s' % (DOMAIN, when[:10], PATH, who))
             f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')

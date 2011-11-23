@@ -51,9 +51,7 @@ def make_feed(charts):
             f.category(None, term='charts')
             f.category(None, term='music')
             with f.content(type='xhtml').div(xmlns=XHTML_NS).ol:
-                for artist in first_n_ranks(charts['artist':], RANKS,
-                    lambda a: str(a.playcount)
-                ):
+                for artist in first_n_ranks(charts['artist':], RANKS, lambda a: str(a.playcount)):
                     with f.li:
                         f.a(unicode(artist.name), href=str(artist.url))
                         f['(%s)' % artist.playcount]

@@ -25,7 +25,9 @@ def first_n_ranks(items, n, keyfunc):
 def fetch_weekly_charts(user_id):
     url = 'http://ws.audioscrobbler.com/2.0/user/%s/weeklyartistchart.xml' % user_id
     try:
-        return xmltramp.load(url)
+        charts = xmltramp.load(url)
+        charts['artist']    # make sure there's at least one artist tag
+        return charts
     except Exception, e:
         return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
 
@@ -66,6 +68,7 @@ def application(environ, start_response):
         return [make_feed(ch)]
     else:
         start_response('404 Not found', [('Content-Type', 'text/xml')])
+        environ['rc'] = 1
         return [ch.__repr__(1, 1)]
 
 if __name__ == '__main__':
@@ -80,5 +83,6 @@ if __name__ == '__main__':
                 out.write(chunk)
             return self.status
 
-    environ = {'user_id': sys.argv[1] if len(sys.argv) == 2 else None}
+    environ = {'user_id': sys.argv[1] if len(sys.argv) == 2 else None, 'rc': 0}
     WSGIWrapper().run(application, environ)
+    sys.exit(environ['rc'])

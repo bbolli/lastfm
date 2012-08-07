@@ -24,7 +24,7 @@ function updated() {
 }
 
 # get the current charts
-charts >$new || exit $?
+charts >$new || exit
 
 # exit if they didn't change
 [[ -z "$(sorteddiff)" ]] && rm $new && exit

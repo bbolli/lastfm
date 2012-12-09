@@ -42,6 +42,6 @@ else
         tumble -e "$(cat $id)" <$current
     else
         tumble <$current | tee $id
-        sed -i -ne '/ok/s/[^0-9]\+//gp' $id
+        sed -i -ne '/post/s/[^0-9]\+//gp' $id
     fi
 fi

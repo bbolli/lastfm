@@ -8,6 +8,7 @@ an Atom feed with the most played artists."""
 DOMAIN = 'drbeat.li'
 PATH = '/lastfm.atom'
 RANKS = 3
+MIN_PLAYCOUNT = 2
 
 import sys, datetime
 from itertools import groupby, islice
@@ -28,6 +29,15 @@ def fetch_weekly_charts(user_id):
         return xmltramp.load(url)
     except Exception, e:
         return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
+
+def playcount(artist):
+    return int(str(artist.playcount))
+
+def prune_charts(charts):
+    for a in charts['artist':]:
+        if playcount(a) < MIN_PLAYCOUNT:
+            del charts[a]
+    return hasattr(charts, 'artist')
 
 def make_feed(charts):
     f = xmlbuilder.builder()
@@ -51,7 +61,7 @@ def make_feed(charts):
             f.category(None, term='charts')
             f.category(None, term='music')
             with f.content(type='xhtml').div(xmlns=XHTML_NS).ol:
-                for artist in first_n_ranks(charts['artist':], RANKS, lambda a: str(a.playcount)):
+                for artist in first_n_ranks(charts['artist':], RANKS, playcount):
                     with f.li:
                         f.a(unicode(artist.name), href=str(artist.url))
                         f['(%s)' % artist.playcount]
@@ -61,7 +71,7 @@ def application(environ, start_response):
     """WSGI interface"""
     user_id = environ.get('user_id') or 'bbolli'
     ch = fetch_weekly_charts(user_id)
-    if ch._name == 'weeklyartistchart' and hasattr(ch, 'artist'):
+    if ch._name == 'weeklyartistchart' and prune_charts(ch):
         start_response('200 OK', [('Content-Type', 'application/atom+xml')])
         return [make_feed(ch)]
     else:

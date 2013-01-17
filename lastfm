@@ -9,39 +9,65 @@
 # or edit the current post if it didn't.
 
 current=$HOME/public_html/lastfm.atom
-old=$current.bak
 new=$current.new
-id=$current.id
+db=$current.dat
+opt=$1
 
 input=$current; [[ -r $current ]] || input=/dev/null
 
-function sorteddiff() {
+sorteddiff() {
     diff -ui <(sort $input) <(sort $new)
 }
 
-function updated() {
+updated() {
     sed -ne '/<updated>/s![ </>updated]!!gp' <$1 | head -n1
+}
+
+tumble_check() {
+    ret=$(tumble $1 <$current)
+    echo "$ret"
+    [[ "$ret" =~ \'error\' ]] && exit 1
 }
 
 # get the current charts
 charts >$new || exit
 
-# exit if they didn't change
-[[ -z "$(sorteddiff)" ]] && rm $new && exit
+# get the updated date and the hash
+upd=$(updated $new)
+sha=$(sort $new | sha1sum | cut -c-40)
 
-if [[ "$1" == -d ]]; then
+# create the database if it doesn't exist
+[[ -r $db ]] || echo >$db
+
+# search this date's post id and hash
+set -- $(awk '$1 ~ /'$upd'/ { print $2 " " $3; exit; }' <$db)
+
+# if it wasn't found, create a new post
+if [[ -z "$1" ]]; then
+    id=
+# if the hash is the same, exit
+elif [[ $2 = $sha ]]; then
+    exit
+# if it was found, edit it
+else
+    id=$1
+fi
+
+if [[ "$opt" == -d ]]; then
     # show the difference in dry-run mode
     sorteddiff || true
 else
     # update the current file
-    [[ -r $current ]] && mv -f $current $old
     mv -f $new $current
-    [[ "$1" == -u ]] && exit
-    # edit the current post if the <updated> date is still the same
-    if [[ "$1" == -e || -r $old && "$(updated $old)" == "$(updated $current)" ]]; then
-        tumble -e "$(cat $id)" <$current
+    [[ "$opt" == -u ]] && exit
+    # edit the current post if we found its id
+    if [[ "$id" ]]; then
+        ret=$(tumble_check "-e $id")
+        sed -i -e "/ $id / c\\
+$upd $id $sha" $db
     else
-        tumble <$current | tee $id
-        sed -i -ne '/post/s/[^0-9]\+//gp' $id
+        ret=$(tumble_check)
+        id=$(echo "$ret" | sed -ne '/post/s/[^0-9]\+//gp')
+        echo "$upd $id $sha" >>$db
     fi
 fi

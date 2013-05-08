@@ -58,8 +58,8 @@ def make_feed(charts):
             f.updated(when)
             f.id('tag:%s,%s:%s:%s' % (DOMAIN, when[:10], PATH, who))
             f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')
-            f.category(None, term='charts')
-            f.category(None, term='music')
+            for term in ('charts', 'music', 'last.fm'):
+                f.category(None, term=term)
             with f.content(type='xhtml').div(xmlns=XHTML_NS).ol:
                 for artist in first_n_ranks(charts['artist':], RANKS, playcount):
                     with f.li:

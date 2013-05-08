@@ -38,9 +38,8 @@ class LovedTracks(BaseRSSFetcher):
                     f.updated(entry.updated)
                     f.id(entry.id)
                     f.link('')          # an empty link makes it a text post
-                    f.category(None, term='loved')
-                    f.category(None, term='music')
-                    f.category(None, term='last.fm')
+                    for term in ('loved', 'music', 'last.fm'):
+                        f.category(None, term=term)
                     with f.content(type='xhtml').div(xmlns=XHTML_NS).p:
                         f[u"Favorite track:"]
                         f.a(entry.title, href=entry.link)

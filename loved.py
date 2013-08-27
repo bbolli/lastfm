@@ -50,7 +50,6 @@ def application(environ, start_response):
     """WSGI interface"""
     user_id = environ.get('user_id') or 'bbolli'
     lt = LovedTracks()
-    lt.debug = -1       # suppress the log on stdout
     #lt.force = True
     #lt.dry_run = True
     try:

@@ -12,6 +12,7 @@ MIN_PLAYCOUNT = 2
 
 import sys, datetime
 from itertools import groupby, islice
+from contextlib import nested
 
 import xmltramp, xmlbuilder
 
@@ -60,7 +61,7 @@ def make_feed(charts):
             f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')
             for term in ('charts', 'music', 'last.fm'):
                 f.category(None, term=term)
-            with f.content(type='xhtml').div(xmlns=XHTML_NS).ol:
+            with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.ol):
                 for artist in first_n_ranks(charts['artist':], RANKS, playcount):
                     with f.li:
                         f.a(unicode(artist.name), href=str(artist.url))

@@ -41,11 +41,16 @@ def prune_charts(charts):
     return hasattr(charts, 'artist')
 
 def make_feed(charts):
+    who = charts('user')
+    when = datetime.datetime.utcfromtimestamp(int(charts('to')))
+    when = when.isoformat() + 'Z'
+    tags = ('charts', 'music', 'last.fm')
+    artists = [dict(name=unicode(a.name), url=str(a.url), playcount=playcount(a))
+        for a in first_n_ranks(charts['artist':], RANKS, playcount)
+    ]
+
     f = xmlbuilder.builder()
     with f.feed(xmlns=ATOM_NS):
-        who = charts('user')
-        when = datetime.datetime.utcfromtimestamp(int(charts('to')))
-        when = when.isoformat() + 'Z'
         lastfm = 'http://www.last.fm/user/%s' % who
         f.title(u"Meine last.fm-Hitparade")
         with f.author:
@@ -59,13 +64,13 @@ def make_feed(charts):
             f.updated(when)
             f.id('tag:%s,%s:%s:%s' % (DOMAIN, when[:10], PATH, who))
             f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')
-            for term in ('charts', 'music', 'last.fm'):
+            for term in tags:
                 f.category(None, term=term)
             with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.ol):
-                for artist in first_n_ranks(charts['artist':], RANKS, playcount):
+                for artist in artists:
                     with f.li:
-                        f.a(unicode(artist.name), href=str(artist.url))
-                        f['(%s)' % artist.playcount]
+                        f.a(artist['name'], href=artist['url'])
+                        f['(%s)' % artist['playcount']]
     return str(f)
 
 def application(environ, start_response):

@@ -54,12 +54,7 @@ class Entry:
 
     def as_blosxom(self):
         f = xmlbuilder.builder(version=None)
-        with f.ol:
-            for artist in self.artists:
-                with f.li:
-                    f.a(artist['name'], href=artist['url'])
-                    f['(%s)' % artist['playcount']]
-
+        self.content(f)
         return u'\n'.join([self.title,
             'meta-tags: ' + ', '.join(self.tags), '',
             unicode(f)
@@ -83,12 +78,17 @@ class Entry:
                 f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')
                 for term in self.tags:
                     f.category(None, term=term)
-                with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.ol):
-                    for artist in self.artists:
-                        with f.li:
-                            f.a(artist['name'], href=artist['url'])
-                            f['(%s)' % artist['playcount']]
+                with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS)):
+                    self.content(f)
         return str(f)
+
+    def content(self, f):
+        with f.ol:
+            for artist in self.artists:
+                with f.li:
+                    f.a(artist['name'], href=artist['url'])
+                    f['(%s)' % artist['playcount']]
+
 
 def application(environ, start_response):
     """WSGI interface"""

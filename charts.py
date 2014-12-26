@@ -52,6 +52,19 @@ class Entry:
         ]
         self.title = u"Meist gespielte Bands vom %s" % self.when[:10]
 
+    def as_blosxom(self):
+        f = xmlbuilder.builder(version=None)
+        with f.ol:
+            for artist in self.artists:
+                with f.li:
+                    f.a(artist['name'], href=artist['url'])
+                    f['(%s)' % artist['playcount']]
+
+        return u'\n'.join([self.title,
+            'meta-tags: ' + ', '.join(self.tags), '',
+            unicode(f)
+        ]).encode('utf-8')
+
     def as_atom(self):
         f = xmlbuilder.builder()
         with f.feed(xmlns=ATOM_NS):
@@ -82,8 +95,12 @@ def application(environ, start_response):
     user_id = environ.get('user_id') or 'bbolli'
     ch = fetch_weekly_charts(user_id)
     if ch._name == 'weeklyartistchart' and prune_charts(ch):
-        start_response('200 OK', [('Content-Type', 'application/atom+xml')])
-        return [Entry(ch).as_atom()]
+        if environ.get('fmt') == 'blosxom':
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [Entry(ch).as_blosxom()]
+        else:
+            start_response('200 OK', [('Content-Type', 'application/atom+xml')])
+            return [Entry(ch).as_atom()]
     else:
         start_response('404 Not found', [('Content-Type', 'text/xml')])
         environ['rc'] = 1
@@ -92,5 +109,10 @@ def application(environ, start_response):
 if __name__ == '__main__':
     """command-line interface"""
     from wsgi import WSGIWrapper
-    environ = {'user_id': sys.argv[1] if len(sys.argv) == 2 else None, 'rc': 0}
+    environ = {'rc': 0}
+    if '-b' in sys.argv:
+        sys.argv.remove('-b')
+        environ['fmt'] = 'blosxom'
+    if len(sys.argv) == 2:
+        environ['user_id'] = sys.argv[1]
     WSGIWrapper().run(application, environ)

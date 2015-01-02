@@ -71,7 +71,7 @@ class Entry:
             f.updated(self.when)
             f.id('tag:drbeat.li,2010:lastfmcharts:%s' % self.who)
             f.link(None, rel='self', href='http://%s%s' % (DOMAIN, PATH))
-            with f.self:
+            with f.entry:
                 f.title(u"Meist gespielte Bands vom %s" % self.when[:10])
                 f.updated(self.when)
                 f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.when[:10], PATH, self.who))

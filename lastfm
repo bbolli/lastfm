@@ -11,6 +11,8 @@
 current=$HOME/public_html/lastfm.atom
 new=$current.new
 db=$current.dat
+out=$current.out
+err=$current.err
 opt=$1
 
 input=$current; [[ -r $current ]] || input=/dev/null
@@ -24,9 +26,10 @@ updated() {
 }
 
 tumble_check() {
-    ret=$(tumble $1 <$current)
-    echo "$ret"
-    [[ "$ret" =~ \'error\' ]] && exit 1
+    tumble $1 <$current >$out 2>$err
+    [[ -s $err ]] && printf "{'error': '%s'}\n" "$(cat $err)" >>$out
+    cat $out
+    ! grep -q "'error" $out
 }
 
 # get the current charts
@@ -62,11 +65,11 @@ else
     [[ "$opt" == -u ]] && exit
     # edit the current post if we found its id
     if [[ "$id" ]]; then
-        ret=$(tumble_check "-e $id")
+        ret=$(tumble_check "-e $id") || { echo "$ret"; exit 1; }
         sed -i -e "/ $id / c\\
 $upd $id $sha" $db
     else
-        ret=$(tumble_check)
+        ret=$(tumble_check) || { echo "$ret"; exit 1; }
         id=$(echo "$ret" | sed -ne '/post/s/[^0-9]\+//gp')
         echo "$upd $id $sha" >>$db
     fi

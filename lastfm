@@ -8,7 +8,7 @@
 # The default behavior is to add a new post if the <updated> date changed,
 # or edit the current post if it didn't.
 
-current=$HOME/public_html/lastfm.atom
+current=$HOME/public_html/lib/lastfm.atom
 new=$current.new
 db=$current.dat
 out=$current.out

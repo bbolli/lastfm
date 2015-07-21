@@ -5,6 +5,7 @@
 a new feed that is tumblable."""
 
 import sys, datetime
+from contextlib import nested
 import xmlbuilder
 from basefetcher import BaseRSSFetcher
 
@@ -40,7 +41,7 @@ class LovedTracks(BaseRSSFetcher):
                     f.link('')          # an empty link makes it a text post
                     for term in ('loved', 'music', 'last.fm'):
                         f.category(None, term=term)
-                    with f.content(type='xhtml').div(xmlns=XHTML_NS).p:
+                    with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.p):
                         f[u"Favorite track:"]
                         f.a(entry.title, href=entry.link)
         return str(f)

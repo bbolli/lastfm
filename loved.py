@@ -17,7 +17,7 @@ class LovedTracks(BaseRSSFetcher):
     def fetch(self, user):
         self.user = user
         self.loved = []
-        url = 'http://ws.audioscrobbler.com/2.0/user/%s/lovedtracks.rss' % user
+        url = 'https://ws.audioscrobbler.com/2.0/user/%s/lovedtracks.rss' % user
         BaseRSSFetcher.fetch(self, url)
 
     def handle_entry(self, entry):

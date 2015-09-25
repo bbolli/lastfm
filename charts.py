@@ -10,14 +10,21 @@ PATH = '/lastfm.atom'
 RANKS = 3
 MIN_PLAYCOUNT = 2
 
-import sys, datetime
-from itertools import groupby, islice
 from contextlib import nested
+import datetime
+from itertools import groupby, islice
+import urllib
+import sys
 
-import xmltramp, xmlbuilder
+import xmlbuilder
+import xmltramp
 
 ATOM_NS = 'http://www.w3.org/2005/Atom'
 XHTML_NS = 'http://www.w3.org/1999/xhtml'
+
+LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/?'
+LASTFM_KEY = '4605ebe7bfcaf0c1e9aa76f167da8efc'
+
 
 def first_n_ranks(items, n, keyfunc):
     for key, group in islice(groupby(items, keyfunc), n):
@@ -25,9 +32,20 @@ def first_n_ranks(items, n, keyfunc):
             yield i
 
 def fetch_weekly_charts(user_id):
-    url = 'http://ws.audioscrobbler.com/2.0/user/%s/weeklyartistchart.xml' % user_id
+    params = {
+        'user': user_id,
+        'api_key': LASTFM_KEY,
+        'method': 'user.gettopartists',
+        'period': '7day',
+        'limit': 200,
+    }
+    url = LASTFM_URL + urllib.urlencode(params)
     try:
-        return xmltramp.load(url)
+        lfm = xmltramp.load(url)
+        # print url
+        # print lfm.__repr__(1, 1)
+        if lfm('status') == 'ok':
+            return lfm[0]   # first child element
     except Exception, e:
         return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
 
@@ -44,7 +62,7 @@ def prune_charts(charts):
 class Entry:
     def __init__(self, charts):
         self.who = charts('user')
-        self.ts = datetime.datetime.utcfromtimestamp(int(charts('to')))
+        self.ts = datetime.datetime.now()
         self.when = self.ts.isoformat() + 'Z'
         self.tags = ('charts', 'music', 'last.fm')
         self.artists = [dict(name=unicode(a.name), url=str(a.url), playcount=playcount(a))
@@ -94,7 +112,7 @@ def application(environ, start_response):
     """WSGI interface"""
     user_id = environ.get('user_id') or 'bbolli'
     ch = fetch_weekly_charts(user_id)
-    if ch._name == 'weeklyartistchart' and prune_charts(ch):
+    if ch._name == 'topartists' and prune_charts(ch):
         if environ.get('fmt') == 'blosxom':
             start_response('200 OK', [('Content-Type', 'text/plain')])
             return [Entry(ch).as_blosxom()]

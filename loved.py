@@ -1,24 +1,42 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-"""Gets the RSS feed of the loved tracks and reformats them into
-a new feed that is tumblable."""
+"""Gets the loved tracks and reformats them into a new feed suitable for
+tumble.py"""
 
-import sys, datetime
 from contextlib import nested
+import datetime
+import sys
+import urllib
+
+import basefetcher
 import xmlbuilder
-from basefetcher import BaseRSSFetcher
+import xmltramp
 
 ATOM_NS = 'http://www.w3.org/2005/Atom'
 XHTML_NS = 'http://www.w3.org/1999/xhtml'
 
-class LovedTracks(BaseRSSFetcher):
+LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/?'
+LASTFM_KEY = '4605ebe7bfcaf0c1e9aa76f167da8efc'
+
+
+class LovedTracks(basefetcher.UrlTimestampDataBase):
 
     def fetch(self, user):
         self.user = user
         self.loved = []
-        url = 'https://ws.audioscrobbler.com/2.0/user/%s/lovedtracks.rss' % user
-        BaseRSSFetcher.fetch(self, url)
+        params = {
+            'method': 'user.getlovedtracks',
+            'user': user,
+            'api_key': LASTFM_KEY,
+        }
+        self.url = LASTFM_URL + urllib.urlencode(params)
+        lfm = xmltramp.load(self.url)
+        if lfm('status') == 'ok':
+            self.open_key(self.url)
+            for loved in lfm.lovedtracks['track':]:
+                self.handle_if_newer(int(loved.date('uts')), loved)
+            self.close_key()
 
     def handle_entry(self, entry):
         self.loved.append(entry)
@@ -29,21 +47,22 @@ class LovedTracks(BaseRSSFetcher):
             return ''
         f = xmlbuilder.builder()
         with f.feed(xmlns=ATOM_NS):
-            f.title(self.parsed_feed.feed.title)
-            f.link(None, href=self.parsed_feed.feed.link)
-            f.updated(self.parsed_feed.feed.updated)
+            f.title(u"last.fm loved tracks")
+            f.link(None, href=self.url)
             f.id('tag:drbeat.li,2013:lastfmloved:%s' % self.user)
             for entry in self.loved:
                 with f.entry:
                     f.title('')
-                    f.updated(entry.updated)
-                    f.id(entry.id)
+                    d = datetime.datetime.fromtimestamp(int(entry.date('uts')))
+                    f.updated(d.isoformat())
+                    f.id(str(entry.mbid))
                     f.link('')          # an empty link makes it a text post
                     for term in ('loved', 'music', 'last.fm'):
                         f.category(None, term=term)
                     with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.p):
                         f[u"Favorite track:"]
-                        f.a(entry.title, href=entry.link)
+                        f.a(u"%s – %s" % (entry.artist.name, entry.name),
+                            href=str(entry.url))
         return str(f)
 
 
@@ -53,6 +72,7 @@ def application(environ, start_response):
     lt = LovedTracks()
     #lt.force = True
     #lt.dry_run = True
+    #lt.debug = 1
     try:
         lt.fetch(user_id)
         lt.close()
@@ -62,6 +82,7 @@ def application(environ, start_response):
         start_response('500 Server error', [('Content-Type', 'text/plain')])
         environ['rc'] = 1
         return [repr(e).encode('utf-8')]
+
 
 if __name__ == '__main__':
     """command-line interface"""

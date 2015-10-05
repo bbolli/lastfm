@@ -42,10 +42,9 @@ def fetch_weekly_charts(user_id):
     url = LASTFM_URL + urllib.urlencode(params)
     try:
         lfm = xmltramp.load(url)
-        # print url
-        # print lfm.__repr__(1, 1)
         if lfm('status') == 'ok':
             return lfm[0]   # first child element
+        return lfm
     except Exception, e:
         return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
 
@@ -128,11 +127,20 @@ def application(environ, start_response):
 
 if __name__ == '__main__':
     """command-line interface"""
+    import getopt
+    import os
     from wsgi import WSGIWrapper
     environ = {'rc': 0}
-    if '-b' in sys.argv:
-        sys.argv.remove('-b')
-        environ['fmt'] = 'blosxom'
-    if len(sys.argv) == 2:
-        environ['user_id'] = sys.argv[1]
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'bn:')
+    except getopt.GetoptError:
+        print "Usage: %s [-b] [-n ranks]" % sys.argv[0].split(os.sep)[-1]
+        sys.exit(1)
+    for o, v in opts:
+        if o == '-b':
+            environ['fmt'] = 'blosxom'
+        elif o == '-n':
+            RANKS = int(v)
+    if len(args) == 1:
+        environ['user_id'] = args[0]
     WSGIWrapper().run(application, environ)

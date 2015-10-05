@@ -93,7 +93,9 @@ class Entry:
                 f.title(u"Meist gespielte Bands vom %s" % self.when[:10])
                 f.updated(self.when)
                 f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.when[:10], PATH, self.who))
-                f.link(None, rel='alternate', type='text/html', href=lastfm + '/charts?charttype=weekly')
+                f.link(None, rel='alternate', type='text/html',
+                    href=lastfm + '/library/artists?date_preset=LAST_7_DAYS'
+                )
                 for term in self.tags:
                     f.category(None, term=term)
                 with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS)):

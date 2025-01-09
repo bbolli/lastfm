@@ -9,6 +9,7 @@ PATH = '/lastfm.atom'
 RANKS = 3
 MIN_PLAYCOUNT = 2
 
+from dataclasses import dataclass
 import datetime
 from itertools import groupby, islice
 import urllib.parse
@@ -56,13 +57,24 @@ def prune_charts(charts):
     return hasattr(charts, 'artist')
 
 
+@dataclass
+class Artist:
+    name: str
+    url: str
+    playcount: int
+
+    def as_html(self, builder):
+        builder.a(self.name, href=self.url, _post=f' ({self.playcount})')
+
+
 class Entry:
     def __init__(self, charts):
         self.who = charts('user')
         self.ts = datetime.datetime.now()
         self.when = self.ts.isoformat() + 'Z'
         self.tags = ('charts', 'music', 'last.fm')
-        self.artists = [dict(name=str(a.name), url=str(a.url), playcount=playcount(a))
+        self.artists = [
+            Artist(str(a.name), str(a.url), playcount(a))
             for a in first_n_ranks(charts['artist':], RANKS, playcount)
         ]
         self.title = "Meist gespielte Bands vom %s" % self.when[:10]
@@ -103,8 +115,7 @@ class Entry:
         with f.ol:
             for artist in self.artists:
                 with f.li:
-                    f.a(artist['name'], href=artist['url'])
-                    f['(%s)' % artist['playcount']]
+                    artist.as_html(f)
 
 
 def application(environ, start_response):

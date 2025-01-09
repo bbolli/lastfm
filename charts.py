@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# encoding: utf-8
+#!/usr/bin/env python3
 
 """Gets the weekly play statistic from last.fm and generates
 an Atom feed with the most played artists."""
@@ -10,10 +9,9 @@ PATH = '/lastfm.atom'
 RANKS = 3
 MIN_PLAYCOUNT = 2
 
-from contextlib import nested
 import datetime
 from itertools import groupby, islice
-import urllib
+import urllib.parse
 import sys
 
 import xmlbuilder
@@ -39,13 +37,13 @@ def fetch_weekly_charts(user_id):
         'period': '7day',
         'limit': 200,
     }
-    url = LASTFM_URL + urllib.urlencode(params)
+    url = LASTFM_URL + urllib.parse.urlencode(params)
     try:
         lfm = xmltramp.load(url)
         if lfm('status') == 'ok':
             return lfm[0]   # first child element
         return lfm
-    except Exception, e:
+    except Exception as e:
         return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
 
 def playcount(artist):
@@ -64,24 +62,24 @@ class Entry:
         self.ts = datetime.datetime.now()
         self.when = self.ts.isoformat() + 'Z'
         self.tags = ('charts', 'music', 'last.fm')
-        self.artists = [dict(name=unicode(a.name), url=str(a.url), playcount=playcount(a))
+        self.artists = [dict(name=str(a.name), url=str(a.url), playcount=playcount(a))
             for a in first_n_ranks(charts['artist':], RANKS, playcount)
         ]
-        self.title = u"Meist gespielte Bands vom %s" % self.when[:10]
+        self.title = "Meist gespielte Bands vom %s" % self.when[:10]
 
     def as_blosxom(self):
-        f = xmlbuilder.builder(version=None)
+        f = xmlbuilder.XMLBuilder(version=None)
         self.content(f)
-        return u'\n'.join([self.title,
+        return '\n'.join([self.title,
             'meta-tags: ' + ', '.join(self.tags), '',
-            unicode(f)
-        ]).encode('utf-8')
+            str(f)
+        ])
 
     def as_atom(self):
-        f = xmlbuilder.builder()
+        f = xmlbuilder.XMLBuilder()
         with f.feed(xmlns=ATOM_NS):
             lastfm = 'http://www.last.fm/user/%s' % self.who
-            f.title(u"Meine last.fm-Hitparade")
+            f.title("Meine last.fm-Hitparade")
             with f.author:
                 f.name(self.who)
             f.link(None, href=lastfm)
@@ -89,7 +87,7 @@ class Entry:
             f.id('tag:drbeat.li,2010:lastfmcharts:%s' % self.who)
             f.link(None, rel='self', href='http://%s%s' % (DOMAIN, PATH))
             with f.entry:
-                f.title(u"Meist gespielte Bands vom %s" % self.when[:10])
+                f.title("Meist gespielte Bands vom %s" % self.when[:10])
                 f.updated(self.when)
                 f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.when[:10], PATH, self.who))
                 f.link(None, rel='alternate', type='text/html',
@@ -97,7 +95,7 @@ class Entry:
                 )
                 for term in self.tags:
                     f.category(None, term=term)
-                with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS)):
+                with f.content(type='xhtml'), f.div(xmlns=XHTML_NS):
                     self.content(f)
         return str(f)
 
@@ -123,7 +121,7 @@ def application(environ, start_response):
     else:
         start_response('404 Not found', [('Content-Type', 'text/xml')])
         environ['rc'] = 1
-        return [ch.__repr__(1, 1).encode('utf-8') + '\n']
+        return [ch.__repr__(1, 1)]
 
 if __name__ == '__main__':
     """command-line interface"""
@@ -134,7 +132,7 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'bn:')
     except getopt.GetoptError:
-        print "Usage: %s [-b] [-n ranks]" % sys.argv[0].split(os.sep)[-1]
+        print("Usage: %s [-b] [-n ranks]" % sys.argv[0].split(os.sep)[-1])
         sys.exit(1)
     for o, v in opts:
         if o == '-b':

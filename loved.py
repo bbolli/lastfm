@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-# encoding: utf-8
+#!/usr/bin/env python3
 
 """Gets the loved tracks and reformats them into a new feed suitable for
 tumble.py"""
 
-from contextlib import nested
 import datetime
 import sys
-import urllib
+import urllib.parse
 
 import basefetcher
 import xmlbuilder
@@ -30,7 +28,7 @@ class LovedTracks(basefetcher.UrlTimestampDataBase):
             'user': user,
             'api_key': LASTFM_KEY,
         }
-        self.url = LASTFM_URL + urllib.urlencode(params)
+        self.url = LASTFM_URL + urllib.parse.urlencode(params)
         lfm = xmltramp.load(self.url)
         if lfm('status') == 'ok':
             self.open_key(self.url)
@@ -45,9 +43,9 @@ class LovedTracks(basefetcher.UrlTimestampDataBase):
     def write_feed(self):
         if not self.loved:
             return ''
-        f = xmlbuilder.builder()
+        f = xmlbuilder.XMLBuilder()
         with f.feed(xmlns=ATOM_NS):
-            f.title(u"last.fm loved tracks")
+            f.title("last.fm loved tracks")
             f.link(None, href=self.url)
             f.id('tag:drbeat.li,2013:lastfmloved:%s' % self.user)
             for entry in self.loved:
@@ -59,9 +57,9 @@ class LovedTracks(basefetcher.UrlTimestampDataBase):
                     f.link('')          # an empty link makes it a text post
                     for term in ('loved', 'music', 'last.fm'):
                         f.category(None, term=term)
-                    with nested(f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.p):
-                        f[u"Favorite track:"]
-                        f.a(u"%s – %s" % (entry.artist.name, entry.name),
+                    with f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.p:
+                        f["Favorite track:"]
+                        f.a("%s – %s" % (entry.artist.name, entry.name),
                             href=str(entry.url))
         return str(f)
 

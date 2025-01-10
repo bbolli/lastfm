@@ -89,12 +89,9 @@ class Entry:
 
     def as_blosxom(self):
         """Render the charts as a Blosxon blog entry."""
-        f = xmlbuilder.XMLBuilder(version=None)
-        self.content(f)
-        return '\n'.join([self.title,
-            'meta-tags: ' + ', '.join(self.tags), '',
-            str(f)
-        ])
+        builder = xmlbuilder.XMLBuilder(version=None)
+        self.content(builder)
+        return f'{self.title}\nmeta-tags: {", ".join(self.tags)}\n\n{builder}'
 
     def as_atom(self):
         """Render the charts as an ATOM feed."""
@@ -121,12 +118,12 @@ class Entry:
                     self.content(f)
         return str(f)
 
-    def content(self, f):
+    def content(self, builder):
         """Render the ordered list of all artists."""
-        with f.ol:
+        with builder.ol:
             for artist in self.artists:
-                with f.li:
-                    artist.as_html(f)
+                with builder.li:
+                    artist.as_html(builder)
 
 
 def application(environ, start_response):

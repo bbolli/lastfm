@@ -78,14 +78,14 @@ class Entry:
 
     def __init__(self, charts):
         self.who = charts('user')
-        self.ts = datetime.datetime.now()
-        self.when = self.ts.isoformat() + 'Z'
+        self.when = datetime.datetime.now().isoformat() + 'Z'
+        self.date = self.when[:10]
         self.tags = ('charts', 'music', 'last.fm')
         self.artists = [
             Artist(str(a.name), str(a.url), playcount(a))
             for a in first_n_ranks(charts['artist':], RANKS, playcount)
         ]
-        self.title = "Meist gespielte Bands vom %s" % self.when[:10]
+        self.title = "Meist gespielte Bands vom %s" % self.date
 
     def as_blosxom(self):
         """Render the charts as a Blosxon blog entry."""
@@ -109,9 +109,9 @@ class Entry:
             f.id('tag:drbeat.li,2010:lastfmcharts:%s' % self.who)
             f.link(None, rel='self', href='http://%s%s' % (DOMAIN, PATH))
             with f.entry:
-                f.title("Meist gespielte Bands vom %s" % self.when[:10])
+                f.title("Meist gespielte Bands vom %s" % self.date)
                 f.updated(self.when)
-                f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.when[:10], PATH, self.who))
+                f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.date, PATH, self.who))
                 f.link(None, rel='alternate', type='text/html',
                     href=lastfm + '/library/artists?date_preset=LAST_7_DAYS'
                 )

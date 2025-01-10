@@ -95,25 +95,25 @@ class Entry:
 
     def as_atom(self):
         """Render the charts as an ATOM feed."""
-        f = xmlbuilder.XMLBuilder()
+        f = xmlbuilder.XMLBuilder(empty_tags=('link', 'category'))
         with f.feed(xmlns=ATOM_NS):
             lastfm = 'http://www.last.fm/user/%s' % self.who
             f.title("Meine last.fm-Hitparade")
             with f.author:
                 f.name(self.who)
-            f.link(None, href=lastfm)
+            f.link(href=lastfm)
             f.updated(self.when)
             f.id('tag:drbeat.li,2010:lastfmcharts:%s' % self.who)
-            f.link(None, rel='self', href='http://%s%s' % (DOMAIN, PATH))
+            f.link(rel='self', href='http://%s%s' % (DOMAIN, PATH))
             with f.entry:
                 f.title("Meist gespielte Bands vom %s" % self.date)
                 f.updated(self.when)
                 f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.date, PATH, self.who))
-                f.link(None, rel='alternate', type='text/html',
+                f.link(rel='alternate', type='text/html',
                     href=lastfm + '/library/artists?date_preset=LAST_7_DAYS'
                 )
                 for term in self.tags:
-                    f.category(None, term=term)
+                    f.category(term=term)
                 with f.content(type='xhtml'), f.div(xmlns=XHTML_NS):
                     self.content(f)
         return str(f)

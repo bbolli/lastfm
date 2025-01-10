@@ -128,8 +128,7 @@ class Entry:
 
 def application(environ, start_response):
     """WSGI interface"""
-    user_id = environ.get('user_id') or 'bbolli'
-    ch = fetch_weekly_charts(user_id)
+    ch = fetch_weekly_charts(environ['user_id'])
     if ch._name == 'topartists' and prune_charts(ch):
         if environ.get('fmt') == 'blosxom':
             start_response('200 OK', [('Content-Type', 'text/plain')])
@@ -147,7 +146,7 @@ if __name__ == '__main__':
     import getopt
     import os
     from wsgi import WSGIWrapper
-    environ = {'rc': 0}
+    environ = {'rc': 0, 'fmt': 'atom', 'user_id': 'bbolli'}
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'bn:')
     except getopt.GetoptError:

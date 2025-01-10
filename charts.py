@@ -85,7 +85,7 @@ class Entry:
             Artist(str(a.name), str(a.url), playcount(a))
             for a in first_n_ranks(charts['artist':], RANKS, playcount)
         ]
-        self.title = "Meist gespielte Bands vom %s" % self.date
+        self.title = f"Meist gespielte Bands vom {self.date}"
 
     def as_blosxom(self):
         """Render the charts as a Blosxon blog entry."""
@@ -97,18 +97,18 @@ class Entry:
         """Render the charts as an ATOM feed."""
         f = xmlbuilder.XMLBuilder(empty_tags=('link', 'category'))
         with f.feed(xmlns=ATOM_NS):
-            lastfm = 'http://www.last.fm/user/%s' % self.who
+            lastfm = f'http://www.last.fm/user/{self.who}'
             f.title("Meine last.fm-Hitparade")
             with f.author:
                 f.name(self.who)
             f.link(href=lastfm)
             f.updated(self.when)
-            f.id('tag:drbeat.li,2010:lastfmcharts:%s' % self.who)
-            f.link(rel='self', href='http://%s%s' % (DOMAIN, PATH))
+            f.id(f'tag:drbeat.li,2010:lastfmcharts:{self.who}')
+            f.link(rel='self', href=f'http://{DOMAIN}{PATH}')
             with f.entry:
-                f.title("Meist gespielte Bands vom %s" % self.date)
+                f.title(self.title)
                 f.updated(self.when)
-                f.id('tag:%s,%s:%s:%s' % (DOMAIN, self.date, PATH, self.who))
+                f.id(f'tag:{DOMAIN},{self.date}:{PATH}:{self.who}')
                 f.link(rel='alternate', type='text/html',
                     href=lastfm + '/library/artists?date_preset=LAST_7_DAYS'
                 )
@@ -150,7 +150,8 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'bn:')
     except getopt.GetoptError:
-        print("Usage: %s [-b] [-n ranks]" % sys.argv[0].split(os.sep)[-1])
+        prog = sys.argv[0].split(os.sep)[-1]
+        print(f"Usage: {prog} [-b] [-n ranks]")
         sys.exit(1)
     for o, v in opts:
         if o == '-b':

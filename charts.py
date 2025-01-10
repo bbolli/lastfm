@@ -48,9 +48,13 @@ def fetch_weekly_charts(user_id):
         return xmltramp.Element('error', value=str(e), attrs={'class': e.__class__.__name__})
 
 def playcount(artist):
+    """Return the play count of the artist as an int."""
     return int(str(artist.playcount))
 
 def prune_charts(charts):
+    """Remove all artists that have too few plays.
+    Return True if any are left."""
+
     for a in charts['artist':]:
         if playcount(a) < MIN_PLAYCOUNT:
             del charts[a]
@@ -64,10 +68,14 @@ class Artist:
     playcount: int
 
     def as_html(self, builder):
+        """Render this artist as HTML."""
         builder.a(self.name, href=self.url, _post=f' ({self.playcount})')
 
 
 class Entry:
+    """Holds the parsed Last.fm output and produces the charts in either
+    Blosxom of ATOM format."""
+
     def __init__(self, charts):
         self.who = charts('user')
         self.ts = datetime.datetime.now()
@@ -80,6 +88,7 @@ class Entry:
         self.title = "Meist gespielte Bands vom %s" % self.when[:10]
 
     def as_blosxom(self):
+        """Render the charts as a Blosxon blog entry."""
         f = xmlbuilder.XMLBuilder(version=None)
         self.content(f)
         return '\n'.join([self.title,
@@ -88,6 +97,7 @@ class Entry:
         ])
 
     def as_atom(self):
+        """Render the charts as an ATOM feed."""
         f = xmlbuilder.XMLBuilder()
         with f.feed(xmlns=ATOM_NS):
             lastfm = 'http://www.last.fm/user/%s' % self.who
@@ -112,6 +122,7 @@ class Entry:
         return str(f)
 
     def content(self, f):
+        """Render the ordered list of all artists."""
         with f.ol:
             for artist in self.artists:
                 with f.li:

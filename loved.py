@@ -11,7 +11,6 @@ import basefetcher
 import xmlbuilder
 import xmltramp
 
-ATOM_NS = 'http://www.w3.org/2005/Atom'
 XHTML_NS = 'http://www.w3.org/1999/xhtml'
 
 LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/?'
@@ -43,8 +42,8 @@ class LovedTracks(basefetcher.UrlTimestampDataBase):
     def write_feed(self):
         if not self.loved:
             return ''
-        f = xmlbuilder.XMLBuilder()
-        with f.feed(xmlns=ATOM_NS):
+        f = xmlbuilder.ATOMBuilder()
+        with f.start():
             f.title("last.fm loved tracks")
             f.link(None, href=self.url)
             f.id('tag:drbeat.li,2013:lastfmloved:%s' % self.user)
@@ -56,11 +55,10 @@ class LovedTracks(basefetcher.UrlTimestampDataBase):
                     f.id(str(entry.mbid))
                     f.link('')          # an empty link makes it a text post
                     for term in ('loved', 'music', 'last.fm'):
-                        f.category(None, term=term)
+                        f.category(term=term)
                     with f.content(type='xhtml'), f.div(xmlns=XHTML_NS), f.p:
                         f["Favorite track:"]
-                        f.a("%s – %s" % (entry.artist.name, entry.name),
-                            href=str(entry.url))
+                        f.a(f'{entry.artist.name} – {entry.name}', href=str(entry.url))
         return str(f)
 
 
@@ -90,3 +88,4 @@ if __name__ == '__main__':
         'rc': 0,
     }
     WSGIWrapper().run(application, environ)
+    raise SystemExit(environ['rc'])

@@ -18,7 +18,6 @@ import sys
 import xmlbuilder
 import xmltramp
 
-ATOM_NS = 'http://www.w3.org/2005/Atom'
 XHTML_NS = 'http://www.w3.org/1999/xhtml'
 
 LASTFM_URL = 'https://ws.audioscrobbler.com/2.0/?'
@@ -74,7 +73,7 @@ class Artist:
 
 class Entry:
     """Holds the parsed Last.fm output and produces the charts in either
-    Blosxom of ATOM format."""
+    Blosxom or ATOM format."""
 
     def __init__(self, charts):
         self.who = charts('user')
@@ -95,8 +94,8 @@ class Entry:
 
     def as_atom(self):
         """Render the charts as an ATOM feed."""
-        f = xmlbuilder.XMLBuilder(empty_tags=('link', 'category'))
-        with f.feed(xmlns=ATOM_NS):
+        f = xmlbuilder.ATOMBuilder()
+        with f.start():
             lastfm = f'http://www.last.fm/user/{self.who}'
             f.title("Meine last.fm-Hitparade")
             with f.author:
